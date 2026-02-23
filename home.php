@@ -3,10 +3,10 @@ session_start();
 
 include("connection.php");
 
-if (!isset($_SESSION['username'])) {
-    header("location:login.php");
+if (!isset($_SESSION['id'])) {
+    header("Location: login.php");
+    exit();
 }
-
 
 
 
@@ -71,14 +71,14 @@ if (!isset($_SESSION['username'])) {
                                     <li>
                                         <?php
 
-                                        $id = $_SESSION['id'];
+                                        $id = (int) $_SESSION['id'];
                                         $query = mysqli_query($conn, "SELECT * FROM users WHERE id = $id");
 
-                                        while ($result = mysqli_fetch_assoc($query)) {
-                                            $res_username = $result['username'];
-                                            $res_email = $result['email'];
-                                            $res_id = $result['id'];
-                                        }
+                                        $result = mysqli_fetch_assoc($query);
+
+                                        $res_username = $result['username'];
+                                        $res_email = $result['email'];
+                                        $res_id = $result['id'];
 
 
                                         echo "<a class='dropdown-item' href='edit.php?id=$res_id'>Change Profile</a>";
@@ -102,9 +102,8 @@ if (!isset($_SESSION['username'])) {
     <div class="name">
         <center>Welcome
             <?php
-            // echo $_SESSION['valid'];
             
-            echo $_SESSION['username'];
+            echo htmlspecialchars($_SESSION['username']);
 
             ?>
             !
