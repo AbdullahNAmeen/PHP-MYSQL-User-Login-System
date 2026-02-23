@@ -27,71 +27,44 @@ if (!isset($_SESSION['username'])) {
         <div class="form-box box">
 
             <?php
+                session_start();
+                require 'connection.php'; // your DB connection
 
-            if (isset($_POST['update'])) {
-                $username = $_POST['username'];
-                $email = $_POST['email'];
-                $password = $_POST['password'];
+                $id = $_SESSION['id'] ?? null;
 
-                $id = $_SESSION['id'];
-                $edit_query = mysqli_query($conn, "UPDATE users SET username='$username', email='$email', password='$password' WHERE id = $id");
-
-                if ($edit_query) {
-                    echo "<div class='message'>
-                <p>Profile Updated!</p>
-                </div><br>";
-                    echo "<a href='home.php'><button class='btn'>Go Home</button></a>";
+                if (!$id) {
+                header("Location: login.php");
+                exit();
                 }
+
+                if (isset($_POST['update'])) {
+            $username = trim($_POST['username']);
+            $email = trim($_POST['email']);
+            $password = $_POST['password'];
+
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+            $stmt = $conn->prepare("UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?");
+            $stmt->bind_param("sssi", $username, $email, $hashed_password, $id);
+
+            if ($stmt->execute()) {
+            echo "<div class='message'><p>Profile Updated!</p></div><br>";
+            echo "<a href='home.php'><button class='btn'>Go Home</button></a>";
             } else {
+            echo "<div class='message'><p>Error updating profile. Please try again.</p></div>";
+            }
 
-                $id = $_SESSION['id'];
-                $query = mysqli_query($conn, "SELECT * FROM users WHERE id = $id") or die("error occurs");
-
-                while ($result = mysqli_fetch_assoc($query)) {
-                    $res_username = $result['username'];
-                    $res_email = $result['email'];
-                    $res_password = $result['password'];
-                    $res_id = $result['id'];
-                }
-
-                ?>
-
-                <header>Change Profile</header>
-                <form action="#" method="POST" enctype="multipart/form-data">
-
-                    <div class="form-box">
-
-                        <div class="input-container">
-                            <i class="fa fa-user icon"></i>
-                            <input class="input-field" type="text" placeholder="Username" name="username"
-                                value="<?php echo $res_username; ?>" required>
-                        </div>
-
-                        <div class="input-container">
-                            <i class="fa fa-envelope icon"></i>
-                            <input class="input-field" type="email" placeholder="Email Address" name="email"
-                                value="<?php echo $res_email; ?>" required>
-                        </div>
-
-                        <div class="input-container">
-                            <i class="fa fa-lock icon"></i>
-                            <input class="input-field password" type="password" placeholder="Password" name="password"
-                                value="<?php echo $res_password; ?>" required>
-                            <i class="fa fa-eye toggle icon"></i>
-                        </div>
-
-                    </div>
-
-
-                    <div class="field">
-                        <input type="submit" name="update" id="submit" value="Update" class="btn">
-                    </div>
-
-
-                </form>
+            $stmt->close();
+            } else {
+            $stmt = $conn->prepare("SELECT username, email FROM users WHERE id = ?");
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            $stmt->bind_result($res_username, $res_email);
+            $stmt->fetch();
+            $stmt->close();
+            }
+            ?>
             </div>
-        <?php } ?>
-    </div>
 
     <script>
         const toggle = document.querySelector(".toggle"),
