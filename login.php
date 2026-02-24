@@ -5,10 +5,10 @@ include "connection.php"; // DB connection
 $error = ""; // store any error messages
 
 if (isset($_POST['login'])) {
-    $emailInput = $_POST['email'];
+    $emailInput = trim($_POST['email']);
     $passwordInput = $_POST['password'];
 
-    // Prepared statement to prevent SQL injection
+    // Use prepared statement to prevent SQL injection
     $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE email = ?");
     $stmt->bind_param("s", $emailInput);
     $stmt->execute();
@@ -17,8 +17,8 @@ if (isset($_POST['login'])) {
     if ($result->num_rows === 1) {
         $row = $result->fetch_assoc();
 
+        // Verify password
         if (password_verify($passwordInput, $row['password'])) {
-            // Login successful
             $_SESSION['id'] = $row['id'];
             $_SESSION['username'] = $row['username'];
             header("Location: home.php");
@@ -48,7 +48,7 @@ if (isset($_POST['login'])) {
     <div class="container">
         <div class="form-box box">
 
-            <!-- Display error messages -->
+            <!-- Display error message -->
             <?php if (!empty($error)) : ?>
                 <div class="message">
                     <p><?php echo $error; ?></p>
@@ -91,17 +91,19 @@ if (isset($_POST['login'])) {
     </div>
 
     <script>
-        const toggle = document.querySelector(".toggle"),
-            input = document.querySelector(".password");
-        toggle.addEventListener("click", () => {
-            if (input.type === "password") {
-                input.type = "text";
-                toggle.classList.replace("fa-eye-slash", "fa-eye");
-            } else {
-                input.type = "password";
-            }
+        const toggles = document.querySelectorAll(".toggle");
+        toggles.forEach(toggle => {
+            const input = toggle.previousElementSibling;
+            toggle.addEventListener("click", () => {
+                if (input.type === "password") {
+                    input.type = "text";
+                    toggle.classList.replace("fa-eye", "fa-eye-slash");
+                } else {
+                    input.type = "password";
+                    toggle.classList.replace("fa-eye-slash", "fa-eye");
+                }
+            });
         });
     </script>
 </body>
-
 </html>
