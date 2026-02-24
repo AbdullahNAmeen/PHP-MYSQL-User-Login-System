@@ -1,17 +1,21 @@
 <?php
 
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-
-$server   = "localhost";
-$username = "root";
+$host = "localhost";
+$user = "root";
 $password = "";
 $database = "login";
 
-$conn = new mysqli($server, $username, $password, $database);
+try {
+    $conn = new mysqli($host, $user, $password, $database);
+    
+    $conn->set_charset("utf8mb4");
+} catch (mysqli_sql_exception $e) {
 
-if ($conn->connect_error) {
-    die("Database connection failed: " . $conn->connect_error);
+    die("Database connection failed: " . $e->getMessage());
 }
