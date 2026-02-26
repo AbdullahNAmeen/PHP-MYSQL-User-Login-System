@@ -1,15 +1,20 @@
 <?php
 session_start();
+require_once "connection.php";
 
-include("connection.php");
-
-if (!isset($_SESSION['username'])) {
-    header("location:login.php");
+if (!isset($_SESSION['id'])) {
+    header("Location: login.php");
+    exit();
 }
 
-
-
-
+// Fetch current user info for dropdown and greeting
+$id = $_SESSION['id'];
+$stmt = $conn->prepare("SELECT username, email FROM users WHERE id = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$stmt->bind_result($username, $email);
+$stmt->fetch();
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -70,21 +75,18 @@ if (!isset($_SESSION['username'])) {
 
                                     <li>
                                         <?php
+                                            $id = $_SESSION['id'];
+                                            $query = mysqli_query($conn, "SELECT * FROM users WHERE id = $id");
 
-                                        $id = $_SESSION['id'];
-                                        $query = mysqli_query($conn, "SELECT * FROM users WHERE id = $id");
+                                            while ($result = mysqli_fetch_assoc($query)) {
+                                                $res_username = $result['username'];
+                                                $res_email = $result['email'];
+                                                $res_id = $result['id'];
+                                            }
+                                            ?>
 
-                                        while ($result = mysqli_fetch_assoc($query)) {
-                                            $res_username = $result['username'];
-                                            $res_email = $result['email'];
-                                            $res_id = $result['id'];
-                                        }
+                                            <a class="dropdown-item" href="edit.php?id=<?php echo $id; ?>">Change Profile</a>
 
-
-                                        echo "<a class='dropdown-item' href='edit.php?id=$res_id'>Change Profile</a>";
-
-
-                                        ?>
 
                                     </li>
                                     <li><a class="dropdown-item" href="logout.php">Logout</a></li>
@@ -99,17 +101,9 @@ if (!isset($_SESSION['username'])) {
     </header>
 
 
-    <div class="name">
-        <center>Welcome
-            <?php
-            // echo $_SESSION['valid'];
-            
-            echo $_SESSION['username'];
-
-            ?>
-            !
-        </center>
-    </div>
+    <div class="text-center my-3">
+    Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!
+</div>
 
     <!-- hero section  -->
 
