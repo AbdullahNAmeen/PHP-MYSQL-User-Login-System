@@ -24,111 +24,107 @@
         <div class="form-box">
 
           <?php
+session_start();
+include "connection.php";
 
-          session_start();
+// Check if the signup form was submitted
+if (isset($_POST['register'])) {
 
-          include "connection.php";
+    // Get input values from the form
+    $usernameInput    = $_POST['username'];
+    $emailInput       = $_POST['email'];
+    $passwordInput    = $_POST['password'];
+    $confirmPassword  = $_POST['cpass'];
 
-          if (isset($_POST['register'])) {
+    // Check if the email already exists in the database
+    $checkQuery = "SELECT * FROM users WHERE email='{$emailInput}'";
+    $checkResult = mysqli_query($conn, $checkQuery);
 
-            $name = $_POST['username'];
-            $email = $_POST['email'];
-            $pass = $_POST['password'];
-            $cpass = $_POST['cpass'];
+    // Hash the password before saving
+    $hashedPassword = password_hash($passwordInput, PASSWORD_DEFAULT);
 
+    // Generate a random key (not used yet, but left from original code)
+    $key = bin2hex(random_bytes(12));
 
-            $check = "select * from users where email='{$email}'";
+    if (mysqli_num_rows($checkResult) > 0) {
+        // Email already exists
+        echo "<div class='message'>
+                <p>This email is already used. Try another one please!</p>
+              </div><br>";
+        echo "<a href='javascript:self.history.back()'><button class='btn'>Go Back</button></a>";
 
-            $res = mysqli_query($conn, $check);
+    } else {
 
-            $passwd = password_hash($pass, PASSWORD_DEFAULT);
+        if ($passwordInput === $confirmPassword) {
+            // Insert new user into database
+            $insertQuery = "INSERT INTO users(username,email,password) VALUES('$usernameInput','$emailInput','$hashedPassword')";
+            $insertResult = mysqli_query($conn, $insertQuery);
 
-            $key = bin2hex(random_bytes(12));
-
-
-
-
-            if (mysqli_num_rows($res) > 0) {
-              echo "<div class='message'>
-        <p>This email is used, Try another One Please!</p>
-        </div><br>";
-
-              echo "<a href='javascript:self.history.back()'><button class='btn'>Go Back</button></a>";
-
-
-            } else {
-
-              if ($pass === $cpass) {
-
-                $sql = "insert into users(username,email,password) values('$name','$email','$passwd')";
-
-                $result = mysqli_query($conn, $sql);
-
-                if ($result) {
-
-                  echo "<div class='message'>
-      <p>You are register successfully!</p>
-      </div><br>";
-
-                  echo "<a href='login.php'><button class='btn'>Login Now</button></a>";
-
-                } else {
-                  echo "<div class='message'>
-        <p>This email is used, Try another One Please!</p>
-        </div><br>";
-
-                  echo "<a href='javascript:self.history.back()'><button class='btn'>Go Back</button></a>";
-                }
-
-              } else {
+            if ($insertResult) {
+                // Successful registration
                 echo "<div class='message'>
-      <p>Password does not match.</p>
-      </div><br>";
-
-                echo "<a href='signup.php'><button class='btn'>Go Back</button></a>";
-              }
+                        <p>You have registered successfully!</p>
+                      </div><br>";
+                echo "<a href='login.php'><button class='btn'>Login Now</button></a>";
+            } else {
+                // Failed to insert (probably rare)
+                echo "<div class='message'>
+                        <p>There was an error. Please try again!</p>
+                      </div><br>";
+                echo "<a href='javascript:self.history.back()'><button class='btn'>Go Back</button></a>";
             }
-          } else {
 
-            ?>
+        } else {
+            // Passwords do not match
+            echo "<div class='message'>
+                    <p>Passwords do not match.</p>
+                  </div><br>";
+            echo "<a href='signup.php'><button class='btn'>Go Back</button></a>";
+        }
+    }
 
-            <div class="input-container">
-              <i class="fa fa-user icon"></i>
-              <input class="input-field" type="text" placeholder="Username" name="username" required>
-            </div>
+} else {
+    // Show the signup form if no POST submission
+    ?>
 
-            <div class="input-container">
-              <i class="fa fa-envelope icon"></i>
-              <input class="input-field" type="email" placeholder="Email Address" name="email" required>
-            </div>
+    <div class="input-container">
+        <!-- Username input -->
+        <i class="fa fa-user icon"></i>
+        <input class="input-field" type="text" placeholder="Username" name="username" required>
+    </div>
 
-            <div class="input-container">
-              <i class="fa fa-lock icon"></i>
-              <input class="input-field password" type="password" placeholder="Password" name="password" required>
-              <i class="fa fa-eye icon toggle"></i>
-            </div>
+    <div class="input-container">
+        <!-- Email input -->
+        <i class="fa fa-envelope icon"></i>
+        <input class="input-field" type="email" placeholder="Email Address" name="email" required>
+    </div>
 
-            <div class="input-container">
-              <i class="fa fa-lock icon"></i>
-              <input class="input-field" type="password" placeholder="Confirm Password" name="cpass" required>
-              <i class="fa fa-eye icon"></i>
-            </div>
+    <div class="input-container">
+        <!-- Password input -->
+        <i class="fa fa-lock icon"></i>
+        <input class="input-field password" type="password" placeholder="Password" name="password" required>
+        <i class="fa fa-eye icon toggle"></i>
+    </div>
 
-          </div>
+    <div class="input-container">
+        <!-- Confirm password input -->
+        <i class="fa fa-lock icon"></i>
+        <input class="input-field" type="password" placeholder="Confirm Password" name="cpass" required>
+        <i class="fa fa-eye icon"></i>
+    </div>
 
+    <center>
+        <input type="submit" name="register" id="submit" value="Signup" class="btn">
+    </center>
 
-          <center><input type="submit" name="register" id="submit" value="Signup" class="btn"></center>
+    <div class="links">
+        Already have an account? <a href="login.php">Signin Now</a>
+    </div>
 
+<?php
+}
+?>
 
-          <div class="links">
-            Already have an account? <a href="login.php">Signin Now</a>
-          </div>
-
-        </form>
-      </div>
-      <?php
-          }
-          ?>
   </div>
 
   <script>

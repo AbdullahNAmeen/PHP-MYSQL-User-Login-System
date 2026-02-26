@@ -17,94 +17,81 @@ session_start();
     <div class="form-box box">
 
       <?php
-      include "connection.php";
+include "connection.php";
 
-      if (isset($_POST['login'])) {
+// Check if login form is submitted
+if (isset($_POST['login'])) {
 
-        $email = $_POST['email'];
-        $pass = $_POST['password'];
+    // Get user inputs from the form
+    $emailInput = $_POST['email'];       // user typed email
+    $passwordInput = $_POST['password']; // user typed password
 
-        $sql = "select * from users where email='$email'";
+    // Query the database for the user
+    $sql = "SELECT * FROM users WHERE email='$emailInput'";
+    $res = mysqli_query($conn, $sql);
 
-        $res = mysqli_query($conn, $sql);
+    if (mysqli_num_rows($res) > 0) {
 
-        if (mysqli_num_rows($res) > 0) {
+        $row = mysqli_fetch_assoc($res);
+        $hashedPassword = $row['password'];
 
-          $row = mysqli_fetch_assoc($res);
+        // Verify the password
+        $isPasswordCorrect = password_verify($passwordInput, $hashedPassword);
 
-          $password = $row['password'];
-
-          $decrypt = password_verify($pass, $password);
-
-
-          if ($decrypt) {
+        if ($isPasswordCorrect) {
+            // Login successful, set session variables
             $_SESSION['id'] = $row['id'];
             $_SESSION['username'] = $row['username'];
             header("location: home.php");
-
-
-          } else {
-            echo "<div class='message'>
-                    <p>Wrong Password</p>
-                    </div><br>";
-
-            echo "<a href='login.php'><button class='btn'>Go Back</button></a>";
-          }
+            exit();
 
         } else {
-          echo "<div class='message'>
-                    <p>Wrong Email or Password</p>
-                    </div><br>";
-
-          echo "<a href='login.php'><button class='btn'>Go Back</button></a>";
-
+            echo "<div class='message'><p>Wrong Password</p></div><br>";
+            echo "<a href='login.php'><button class='btn'>Go Back</button></a>";
         }
 
+    } else {
+        echo "<div class='message'><p>Wrong Email or Password</p></div><br>";
+        echo "<a href='login.php'><button class='btn'>Go Back</button></a>";
+    }
 
-      } else {
-
-
-        ?>
-
-        <header>Login</header>
-        <hr>
-        <form action="#" method="POST">
-
-          <div class="form-box">
-
+} else {
+    // Show the login form
+    ?>
+    <header>Login</header>
+    <hr>
+    <form action="#" method="POST">
+        <div class="form-box">
 
             <div class="input-container">
-              <i class="fa fa-envelope icon"></i>
-              <input class="input-field" type="email" placeholder="Email Address" name="email">
+                <i class="fa fa-envelope icon"></i>
+                <input class="input-field" type="email" placeholder="Email Address" name="email">
             </div>
 
             <div class="input-container">
-              <i class="fa fa-lock icon"></i>
-              <input class="input-field password" type="password" placeholder="Password" name="password">
-              <i class="fa fa-eye toggle icon"></i>
+                <i class="fa fa-lock icon"></i>
+                <input class="input-field password" type="password" placeholder="Password" name="password">
+                <i class="fa fa-eye toggle icon"></i>
             </div>
 
             <div class="remember">
-              <input type="checkbox" class="check" name="remember_me">
-              <label for="remember">Remember me</label>
-              <span><a href="forgot.php">Forgot password</a></span>
+                <input type="checkbox" class="check" name="remember_me">
+                <label for="remember">Remember me</label>
+                <span><a href="forgot.php">Forgot password</a></span>
             </div>
 
-          </div>
+        </div>
 
+        <input type="submit" name="login" id="submit" value="Login" class="button">
 
-
-          <input type="submit" name="login" id="submit" value="Login" class="button">
-
-          <div class="links">
+        <div class="links">
             Don't have an account? <a href="signup.php">Signup Now</a>
-          </div>
-
-        </form>
-      </div>
-      <?php
-      }
-      ?>
+        </div>
+    </form>
+    </div>
+<?php
+}
+?>
   </div>
   <script>
     const toggle = document.querySelector(".toggle"),

@@ -13,35 +13,32 @@
         <div class="form-box box">
 
             <?php
-
             include "connection.php";
 
             if (isset($_POST['submit'])) {
-                $name = $_POST['name'];
-                $email = $_POST['email'];
-                $subject = $_POST['subject'];
-                $message = $_POST['message'];
+    
+                $name = trim($_POST['name']);
+                $email = trim($_POST['email']);
+                $subject = trim($_POST['subject']);
+                $message = trim($_POST['message']);
 
+                $stmt = $conn->prepare("INSERT INTO contact (name, email, subject, message) VALUES (?, ?, ?, ?)");
+                $stmt->bind_param("ssss", $name, $email, $subject, $message);
 
-                $query = "INSERT INTO contact(name,email,subject,message) VALUES('$name','$email','$subject','$message')";
-
-                $data = mysqli_query($conn, $query);
-
-                if ($data) {
-                    echo "<div class='message'>
-                    <p>Message sent successfully ✨</p>
-                    </div><br>";
-
-                    echo "<a href='index.php'><button class='btn'>Go Back</button></a>";
-                } else {
-                    echo "<div class='message'>
-                    <p>Message sending fail 😔</p>
-                    </div><br>";
-
-                    echo "<a href='index.php'><button class='btn'>Go Back</button></a>";
-                }
+            if ($stmt->execute()) {
+            echo "<div class='message'>
+                <p>Message sent successfully</p>
+              </div><br>";
+            echo "<a href='index.php'><button class='btn'>Go Back</button></a>";
+            } else {
+            echo "<div class='message'>
+                <p>Message sending failed</p>
+              </div><br>";
+            echo "<a href='index.php'><button class='btn'>Go Back</button></a>";
             }
 
+                $stmt->close();
+            }
             ?>
 
         </div>
