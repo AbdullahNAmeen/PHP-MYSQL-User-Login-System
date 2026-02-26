@@ -3,10 +3,10 @@ session_start();
 
 include("connection.php");
 
-if (!isset($_SESSION['username'])) {
-    header("location:login.php");
+if (!isset($_SESSION['id'])) {
+    header("Location: login.php");
+    exit();
 }
-
 
 
 
@@ -70,21 +70,16 @@ if (!isset($_SESSION['username'])) {
 
                                     <li>
                                         <?php
+                                            $id = (int)$_SESSION['id'];
 
-                                        $id = $_SESSION['id'];
-                                        $query = mysqli_query($conn, "SELECT * FROM users WHERE id = $id");
-
-                                        while ($result = mysqli_fetch_assoc($query)) {
-                                            $res_username = $result['username'];
-                                            $res_email = $result['email'];
-                                            $res_id = $result['id'];
-                                        }
-
-
-                                        echo "<a class='dropdown-item' href='edit.php?id=$res_id'>Change Profile</a>";
-
-
+                                            $stmt = $conn->prepare("SELECT username, email FROM users WHERE id = ?");
+                                            $stmt->bind_param("i", $id);
+                                            $stmt->execute();
+                                            $stmt->bind_result($res_username, $res_email);
+                                            $stmt->fetch();
+                                            $stmt->close();
                                         ?>
+                                    <a class='dropdown-item' href='edit.php?id=<?php echo $id; ?>'>Change Profile</a>   
 
                                     </li>
                                     <li><a class="dropdown-item" href="logout.php">Logout</a></li>
@@ -102,10 +97,7 @@ if (!isset($_SESSION['username'])) {
     <div class="name">
         <center>Welcome
             <?php
-            // echo $_SESSION['valid'];
-            
-            echo $_SESSION['username'];
-
+                echo htmlspecialchars($res_username);
             ?>
             !
         </center>

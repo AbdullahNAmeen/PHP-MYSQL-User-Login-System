@@ -24,125 +24,128 @@
         <div class="form-box">
 
           <?php
+session_start();
+include "connection.php";
 
-          session_start();
+$error = ""; // store any error messages
+$success = ""; // store success messages
 
-          include "connection.php";
+if (isset($_POST['register'])) {
+    $usernameInput   = trim($_POST['username']);
+    $emailInput      = trim($_POST['email']);
+    $passwordInput   = $_POST['password'];
+    $confirmPassword = $_POST['cpass'];
 
-          if (isset($_POST['register'])) {
+    // Check if passwords match
+    if ($passwordInput !== $confirmPassword) {
+        $error = "Passwords do not match.";
+    } else {
+        // Check if email already exists using prepared statement
+        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->bind_param("s", $emailInput);
+        $stmt->execute();
+        $stmt->store_result();
 
-            $name = $_POST['username'];
-            $email = $_POST['email'];
-            $pass = $_POST['password'];
-            $cpass = $_POST['cpass'];
+        if ($stmt->num_rows > 0) {
+            $error = "This email is already used. Try another one please!";
+        } else {
+            // Hash the password
+            $hashedPassword = password_hash($passwordInput, PASSWORD_DEFAULT);
 
-
-            $check = "select * from users where email='{$email}'";
-
-            $res = mysqli_query($conn, $check);
-
-            $passwd = password_hash($pass, PASSWORD_DEFAULT);
-
-            $key = bin2hex(random_bytes(12));
-
-
-
-
-            if (mysqli_num_rows($res) > 0) {
-              echo "<div class='message'>
-        <p>This email is used, Try another One Please!</p>
-        </div><br>";
-
-              echo "<a href='javascript:self.history.back()'><button class='btn'>Go Back</button></a>";
-
-
+            // Insert new user using prepared statement
+            $insertStmt = $conn->prepare("INSERT INTO users(username, email, password) VALUES (?, ?, ?)");
+            $insertStmt->bind_param("sss", $usernameInput, $emailInput, $hashedPassword);
+            if ($insertStmt->execute()) {
+                $success = "You have registered successfully!";
             } else {
-
-              if ($pass === $cpass) {
-
-                $sql = "insert into users(username,email,password) values('$name','$email','$passwd')";
-
-                $result = mysqli_query($conn, $sql);
-
-                if ($result) {
-
-                  echo "<div class='message'>
-      <p>You are register successfully!</p>
-      </div><br>";
-
-                  echo "<a href='login.php'><button class='btn'>Login Now</button></a>";
-
-                } else {
-                  echo "<div class='message'>
-        <p>This email is used, Try another One Please!</p>
-        </div><br>";
-
-                  echo "<a href='javascript:self.history.back()'><button class='btn'>Go Back</button></a>";
-                }
-
-              } else {
-                echo "<div class='message'>
-      <p>Password does not match.</p>
-      </div><br>";
-
-                echo "<a href='signup.php'><button class='btn'>Go Back</button></a>";
-              }
+                $error = "There was an error. Please try again!";
             }
-          } else {
+            $insertStmt->close();
+        }
+        $stmt->close();
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
 
-            ?>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="css/style1.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
 
-            <div class="input-container">
-              <i class="fa fa-user icon"></i>
-              <input class="input-field" type="text" placeholder="Username" name="username" required>
-            </div>
+<body>
+    <div class="container">
+        <div class="form-box box">
 
-            <div class="input-container">
-              <i class="fa fa-envelope icon"></i>
-              <input class="input-field" type="email" placeholder="Email Address" name="email" required>
-            </div>
+            <header>Sign Up</header>
+            <hr>
 
-            <div class="input-container">
-              <i class="fa fa-lock icon"></i>
-              <input class="input-field password" type="password" placeholder="Password" name="password" required>
-              <i class="fa fa-eye icon toggle"></i>
-            </div>
+            <!-- Display success/error messages -->
+            <?php if (!empty($error)) : ?>
+                <div class="message"><p><?php echo $error; ?></p></div><br>
+                <a href='signup.php'><button class='btn'>Go Back</button></a>
+            <?php elseif (!empty($success)) : ?>
+                <div class="message"><p><?php echo $success; ?></p></div><br>
+                <a href='login.php'><button class='btn'>Login Now</button></a>
+            <?php endif; ?>
 
-            <div class="input-container">
-              <i class="fa fa-lock icon"></i>
-              <input class="input-field" type="password" placeholder="Confirm Password" name="cpass" required>
-              <i class="fa fa-eye icon"></i>
-            </div>
+            <?php if (empty($success)) : ?>
+                <form action="#" method="POST">
+                    <div class="form-box">
+                        <div class="input-container">
+                            <i class="fa fa-user icon"></i>
+                            <input class="input-field" type="text" placeholder="Username" name="username" required>
+                        </div>
 
-          </div>
+                        <div class="input-container">
+                            <i class="fa fa-envelope icon"></i>
+                            <input class="input-field" type="email" placeholder="Email Address" name="email" required>
+                        </div>
 
+                        <div class="input-container">
+                            <i class="fa fa-lock icon"></i>
+                            <input class="input-field password" type="password" placeholder="Password" name="password" required>
+                            <i class="fa fa-eye icon toggle"></i>
+                        </div>
 
-          <center><input type="submit" name="register" id="submit" value="Signup" class="btn"></center>
+                        <div class="input-container">
+                            <i class="fa fa-lock icon"></i>
+                            <input class="input-field password" type="password" placeholder="Confirm Password" name="cpass" required>
+                            <i class="fa fa-eye icon toggle"></i>
+                        </div>
 
+                        <center>
+                            <input type="submit" name="register" id="submit" value="Signup" class="btn">
+                        </center>
 
-          <div class="links">
-            Already have an account? <a href="login.php">Signin Now</a>
-          </div>
+                        <div class="links">
+                            Already have an account? <a href="login.php">Signin Now</a>
+                        </div>
+                    </div>
+                </form>
+            <?php endif; ?>
 
-        </form>
-      </div>
-      <?php
-          }
-          ?>
-  </div>
+        </div>
+    </div>
 
-  <script>
-    const toggle = document.querySelector(".toggle"),
-      input = document.querySelector(".password");
-    toggle.addEventListener("click", () => {
-      if (input.type === "password") {
-        input.type = "text";
-        toggle.classList.replace("fa-eye-slash", "fa-eye");
-      } else {
-        input.type = "password";
-      }
-    })
-  </script>
+    <script>
+        const toggles = document.querySelectorAll(".toggle");
+        toggles.forEach(toggle => {
+            const input = toggle.previousElementSibling;
+            toggle.addEventListener("click", () => {
+                if (input.type === "password") {
+                    input.type = "text";
+                    toggle.classList.replace("fa-eye", "fa-eye-slash");
+                } else {
+                    input.type = "password";
+                    toggle.classList.replace("fa-eye-slash", "fa-eye");
+                }
+            });
+        });
+    </script>
 </body>
-
 </html>
